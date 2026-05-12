@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: medical-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: medical_insurance
+    volumes:
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - mysql_data:/var/lib/mysql
+    ports:
+      - "3308:3306"
+    networks:
+      - medical-net
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+
+  backend:
+    build: ./backend
+    container_name: medical-backend
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mysql
+    networks:
+      - medical-net
+    environment:
+      SPRING_PROFILES_ACTIVE: default
+    restart: always
+
+  frontend:
+    build: ./frontend
+    container_name: medical-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - medical-net
+
+networks:
+  medical-net:
+    driver: bridge
+
+volumes:
+  mysql_data:
